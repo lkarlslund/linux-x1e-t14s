@@ -1135,8 +1135,6 @@
 
 		pinctrl-0 = <&kybd_default>;
 		pinctrl-names = "default";
-
-		wakeup-source;
 	};
 };
 
