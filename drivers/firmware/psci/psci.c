@@ -19,6 +19,7 @@
 #include <linux/reboot.h>
 #include <linux/slab.h>
 #include <linux/suspend.h>
+#include <linux/timekeeping.h>
 
 #include <uapi/linux/psci.h>
 
@@ -527,6 +528,8 @@ int psci_cpu_suspend_enter(u32 state)
 }
 #endif
 
+static int psci_system_suspend_raw_ret;
+
 static int psci_system_suspend(unsigned long unused)
 {
 	int err;
@@ -534,14 +537,30 @@ static int psci_system_suspend(unsigned long unused)
 
 	err = invoke_psci_fn(PSCI_FN_NATIVE(1_0, SYSTEM_SUSPEND),
 			      pa_cpu_resume, 0, 0);
+	WRITE_ONCE(psci_system_suspend_raw_ret, err);
 	return psci_to_linux_errno(err);
 }
 
 static int psci_system_suspend_enter(suspend_state_t state)
 {
+	u64 start_ns;
+	u64 elapsed_ms;
+	int raw_ret;
+	int ret;
+
 	pm_set_resume_via_firmware();
 
-	return cpu_suspend(0, psci_system_suspend);
+	/* A value outside the PSCI return-code range means the finisher was skipped. */
+	WRITE_ONCE(psci_system_suspend_raw_ret, 0x7fffffff);
+	start_ns = ktime_get_boottime_ns();
+	ret = cpu_suspend(0, psci_system_suspend);
+	elapsed_ms = div_u64(ktime_get_boottime_ns() - start_ns, NSEC_PER_MSEC);
+	raw_ret = READ_ONCE(psci_system_suspend_raw_ret);
+
+	pr_info("SYSTEM_SUSPEND returned: raw=%d linux=%d elapsed=%llu ms\n",
+		raw_ret, ret, (unsigned long long)elapsed_ms);
+
+	return ret;
 }
 
 static int psci_system_suspend_begin(suspend_state_t state)
