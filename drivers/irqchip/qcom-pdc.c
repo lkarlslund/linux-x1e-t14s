@@ -47,7 +47,7 @@
 #define PDC_VERSION_2_7			PDC_VERSION(2, 7, 0)
 
 /*
- * PDC H/W registers layout per version:
+ * PDC Hardware registers layout per version:
  *
  * IRQ_ENABLE_BANK[b], b = 0....BITS_TO_BYTES(PDC_MAX_IRQS)
  * IRQ_CFG[n], n = 0....PDC_MAX_IRQS
@@ -83,9 +83,9 @@
  * @irq_param_reg:  IRQ_PARAM register location
  */
 struct pdc_regs {
-	u32 irq_en_reg;
-	u32 irq_cfg_reg;
-	u32 irq_param_reg;
+	u32	irq_en_reg;
+	u32	irq_cfg_reg;
+	u32	irq_param_reg;
 };
 
 /**
@@ -97,10 +97,10 @@ struct pdc_regs {
  * @irq_type:       GENMASK for IRQ_TYPE field
  */
 struct pdc_irq_cfg {
-	u32 gpio_irq_sts;
-	u32 gpio_irq_mask;
-	u32 irq_enable;
-	u32 irq_type;
+	u32	gpio_irq_sts;
+	u32	gpio_irq_mask;
+	u32	irq_enable;
+	u32	irq_type;
 };
 
 /**
@@ -178,9 +178,9 @@ static const struct pdc_irq_cfg pdc_cfg_v2_7 = {
 };
 
 struct pdc_pin_region {
-	u32 pin_base;
-	u32 parent_base;
-	u32 cnt;
+	u32	pin_base;
+	u32	parent_base;
+	u32	cnt;
 };
 
 #define pin_to_hwirq(r, p)	((r)->parent_base + (p) - (r)->pin_base)
@@ -426,7 +426,7 @@ static int qcom_pdc_gic_set_type(struct irq_data *d, unsigned int type)
 }
 
 /**
- * qcom_pdc_gic_set_type: Configure PDC for the interrupt
+ * qcom_pdc_gic_secondary_set_type: Configure PDC for the interrupt in secondary mode
  *
  * @d:    the interrupt data
  * @type: the interrupt type
@@ -686,8 +686,7 @@ static int qcom_pdc_probe(struct platform_device *pdev, struct device_node *pare
 		pdc->cfg_fields = &pdc_cfg_v3_2;
 		pdc->regs = &pdc_v3_2;
 		pdc->enable_intr = pdc_enable_intr_cfg;
-	} else if (pdc->version < PDC_VERSION_3_2 &&
-		   pdc->version >= PDC_VERSION_3_0) {
+	} else if (pdc->version >= PDC_VERSION_3_0) {
 		pdc->cfg_fields = &pdc_cfg_v3_0;
 		pdc->regs = &pdc_v3_0;
 		pdc->enable_intr = pdc_enable_intr_bank;
