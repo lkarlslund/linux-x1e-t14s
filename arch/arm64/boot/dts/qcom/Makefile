@@ -1,4 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0
+DTC_FLAGS_x1-el2 := -Wno-avoid_default_addr_size
+
 dtb-$(CONFIG_ARCH_QCOM)	+= apq8016-sbc.dtb
 
 apq8016-sbc-d3-camera-mezzanine-dtbs	:= apq8016-sbc.dtb apq8016-sbc-d3-camera-mezzanine.dtbo

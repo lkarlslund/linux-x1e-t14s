@@ -8,6 +8,14 @@
 /dts-v1/;
 /plugin/;
 
+/* Match the firmware's 40-bit DMA window on machines with high RAM. */
+&soc {
+	#address-cells = <2>;
+	#size-cells = <2>;
+	dma-ranges = <0 0 0 0 0x100 0>;
+	ranges = <0 0 0 0 0x100 0>;
+};
+
 &apss_watchdog {
 	status = "okay";
 };
@@ -54,11 +62,14 @@
 };
 
 &remoteproc_adsp {
-	iommus = <&apps_smmu 0x1000 0x80>;
+	/* Firmware-started DSPs retain their firmware IOMMU configuration. */
+	/delete-property/ iommus;
+	qcom,broken-reset;
 };
 
 &remoteproc_cdsp {
-	iommus = <&apps_smmu 0x0c00 0x0>;
+	/delete-property/ iommus;
+	qcom,broken-reset;
 };
 
 /*

@@ -21,6 +21,7 @@
 #include <linux/platform_device.h>
 #include <linux/pm_domain.h>
 #include <linux/pm_runtime.h>
+#include <linux/property.h>
 #include <linux/firmware/qcom/qcom_pas.h>
 #include <linux/firmware/qcom/qcom_scm.h>
 #include <linux/regulator/consumer.h>
@@ -91,6 +92,7 @@ struct qcom_pas {
 	int crash_reason_smem;
 	unsigned int smem_host_id;
 	bool decrypt_shutdown;
+	bool broken_reset;
 	const char *info_name;
 
 	const struct firmware *firmware;
@@ -233,6 +235,10 @@ static int qcom_pas_load(struct rproc *rproc, const struct firmware *fw)
 	struct qcom_pas *pas = rproc->priv;
 	int ret;
 
+	/* EL2 firmware may authenticate images but cannot reset the DSP. */
+	if (pas->broken_reset)
+		return -EOPNOTSUPP;
+
 	/* Store firmware handle to be used in qcom_pas_start() */
 	pas->firmware = fw;
 
@@ -281,6 +287,9 @@ static int qcom_pas_start(struct rproc *rproc)
 {
 	struct qcom_pas *pas = rproc->priv;
 	int ret;
+
+	if (pas->broken_reset)
+		return -EOPNOTSUPP;
 
 	ret = qcom_q6v5_prepare(&pas->q6v5);
 	if (ret)
@@ -871,6 +880,7 @@ static int qcom_pas_probe(struct platform_device *pdev)
 	pas->info_name = desc->sysmon_name;
 	pas->smem_host_id = desc->smem_host_id;
 	pas->decrypt_shutdown = desc->decrypt_shutdown;
+	pas->broken_reset = device_property_read_bool(&pdev->dev, "qcom,broken-reset");
 	pas->region_assign_idx = desc->region_assign_idx;
 	pas->region_assign_count = min_t(int, MAX_ASSIGN_COUNT, desc->region_assign_count);
 	pas->region_assign_vmid = desc->region_assign_vmid;
@@ -926,7 +936,15 @@ static int qcom_pas_probe(struct platform_device *pdev)
 	if (pas->dtb_pas_id)
 		pas->dtb_pas_ctx->use_tzmem = desc->needs_tzmem || rproc->has_iommu;
 
-	if (desc->early_boot)
+	/*
+	 * Older EL2 firmware leaves the DSP running but cannot restart it.
+	 * Use the upstream attach path, which checks its SMP2P ready state.
+	 * Keep valid load/start callbacks that reject resets, including any
+	 * explicit recovery request, rather than leaving NULL callbacks.
+	 */
+	if (pas->broken_reset)
+		rproc->recovery_disabled = true;
+	if (desc->early_boot || pas->broken_reset)
 		pas->rproc->state = RPROC_DETACHED;
 
 	ret = rproc_add(rproc);
