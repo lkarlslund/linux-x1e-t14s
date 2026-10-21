@@ -27,6 +27,25 @@ config QCOM_AOSS_QMP
 	  subsystems as well as controlling the debug clocks exposed by the Always On
 	  Subsystem (AOSS) using Qualcomm Messaging Protocol (QMP).
 
+config QCOM_X1E_EL1TMR
+	tristate "X1E: EL1 timer deadline for firmware sleep at EL2"
+	depends on ARM64 && ARCH_QCOM && CPU_PM
+	default m
+	help
+	  When Linux runs at EL2 without a hypervisor, copy the next timer
+	  deadline into the EL1 physical timer before CPU power-down, where
+	  the X1E secure firmware looks for the APSS wake-up time. Without it
+	  the firmware returns from system-level sleep requests at once.
+	  Do not keep it loaded while KVM guests run.
+
+config QCOM_X1E_AOSS_CXSD_ONLY
+	tristate "X1E: limit system sleep to CX collapse (no AOSD)"
+	depends on QCOM_AOSS_QMP
+	default m
+	help
+	  Ask the AOSS not to enter AOSD (XO shutdown) while still allowing CX
+	  collapse and DDR self-refresh. Works around hourly resets in AOSD
+	  seen on X1E laptops at EL2.
 config QCOM_COMMAND_DB
 	tristate "Qualcomm Command DB"
 	depends on OF_RESERVED_MEM
