@@ -46,6 +46,19 @@ config QCOM_X1E_AOSS_CXSD_ONLY
 	  Ask the AOSS not to enter AOSD (XO shutdown) while still allowing CX
 	  collapse and DDR self-refresh. Works around hourly resets in AOSD
 	  seen on X1E laptops at EL2.
+
+config QCOM_X1E_ADSP_PWR_LMTS
+	tristate "X1E: tell the ADSP about system standby (power limits)"
+	depends on RPMSG
+	default m
+	help
+	  Send the Modern Standby state to the ADSP on the
+	  APPS_ADSP_PWR_LMTS_GLINK_PORT channel on system suspend and resume,
+	  as Windows' PEP does. The ADSP then stops its power-limits timer,
+	  which otherwise wakes it about 100 times per second during sleep.
+	  Loaded automatically when the ADSP exposes the channel. Some OEM
+	  ADSP firmware (Samsung Galaxy Book4) crashes on this message.
+
 config QCOM_COMMAND_DB
 	tristate "Qualcomm Command DB"
 	depends on OF_RESERVED_MEM
