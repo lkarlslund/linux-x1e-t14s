@@ -312,6 +312,8 @@
 				entry-latency-us = <2500>;
 				exit-latency-us = <2500>;
 				min-residency-us = <9000>;
+				/* DRIPS from runtime idle hangs the SoC after the first s2idle */
+				system-sleep-only;
 			};
 		};
 	};
