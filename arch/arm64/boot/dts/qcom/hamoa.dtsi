@@ -304,6 +304,12 @@
 				entry-latency-us = <2000>;
 				exit-latency-us = <2000>;
 				min-residency-us = <7000>;
+				/*
+				 * CL5 from runtime idle resets X1 (DC ZVA erratum), but
+				 * DRIPS (0x0200c354) is built on it: allow it for system
+				 * sleep only.
+				 */
+				system-sleep-only;
 			};
 
 			domain_ss3: domain-sleep-0 {
@@ -455,19 +461,19 @@
 
 		cluster_pd0: power-domain-cpu-cluster0 {
 			#power-domain-cells = <0>;
-			domain-idle-states = <&cluster_cl4>;
+			domain-idle-states = <&cluster_cl4>, <&cluster_cl5>;
 			power-domains = <&system_pd>;
 		};
 
 		cluster_pd1: power-domain-cpu-cluster1 {
 			#power-domain-cells = <0>;
-			domain-idle-states = <&cluster_cl4>;
+			domain-idle-states = <&cluster_cl4>, <&cluster_cl5>;
 			power-domains = <&system_pd>;
 		};
 
 		cluster_pd2: power-domain-cpu-cluster2 {
 			#power-domain-cells = <0>;
-			domain-idle-states = <&cluster_cl4>;
+			domain-idle-states = <&cluster_cl4>, <&cluster_cl5>;
 			power-domains = <&system_pd>;
 		};
 
