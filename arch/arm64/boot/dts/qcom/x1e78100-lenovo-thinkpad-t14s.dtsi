@@ -2264,3 +2264,12 @@
 
 	};
 };
+
+/*
+ * Sleep test build: let the interconnect providers reach sync_state and drop
+ * the firmware's boot-time votes. They otherwise wait forever for QCE, which
+ * has no driver here (CRYPTO_DEV_QCE is not built).
+ */
+&crypto {
+	status = "disabled";
+};
