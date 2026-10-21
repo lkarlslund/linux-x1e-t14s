@@ -815,6 +815,36 @@ static void bwmon_remove(struct platform_device *pdev)
 	free_irq(bwmon->irq, bwmon);
 }
 
+/*
+ * The bandwidth vote of the last sample stays in place across system suspend,
+ * which keeps DDR out of its low-power modes (X1E80100: the CPU bwmon left
+ * 800 MB/s peak on ebi, DDR LPM never entered in s2idle). Drop it while
+ * suspended.
+ */
+static int bwmon_suspend(struct device *dev)
+{
+	struct icc_bwmon *bwmon = dev_get_drvdata(dev);
+
+	disable_irq(bwmon->irq);
+	bwmon_disable(bwmon);
+	dev_pm_opp_set_opp(dev, NULL);
+	bwmon->current_kbps = 0;
+
+	return 0;
+}
+
+static int bwmon_resume(struct device *dev)
+{
+	struct icc_bwmon *bwmon = dev_get_drvdata(dev);
+
+	bwmon_start(bwmon);
+	enable_irq(bwmon->irq);
+
+	return 0;
+}
+
+static DEFINE_SIMPLE_DEV_PM_OPS(bwmon_pm_ops, bwmon_suspend, bwmon_resume);
+
 static const struct icc_bwmon_data msm8998_bwmon_data = {
 	.sample_ms = 4,
 	.count_unit_kb = 1024,
@@ -879,6 +909,7 @@ static struct platform_driver bwmon_driver = {
 	.driver = {
 		.name = "qcom-bwmon",
 		.of_match_table = bwmon_of_match,
+		.pm = pm_sleep_ptr(&bwmon_pm_ops),
 	},
 };
 module_platform_driver(bwmon_driver);
