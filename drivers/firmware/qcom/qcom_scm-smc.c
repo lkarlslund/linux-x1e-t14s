@@ -15,10 +15,14 @@
 #include <linux/dma-mapping.h>
 #include <linux/of.h>
 
-/* is_hyp_mode_available() reads state a modular SCM cannot link to. */
+/*
+ * is_hyp_mode_available() reads state a modular SCM cannot link to.
+ * Only an EL1 kernel with EL2 available (nVHE) must supply the client ID
+ * itself: with VHE the kernel runs at EL2 and QSEE rejects x7 = HLOS.
+ */
 #if IS_ENABLED(CONFIG_ARM64) && IS_BUILTIN(CONFIG_QCOM_SCM)
 #include <asm/virt.h>
-#define qcom_scm_el2()	is_hyp_mode_available()
+#define qcom_scm_el2()	(is_hyp_mode_available() && !is_kernel_in_hyp_mode())
 #else
 #define qcom_scm_el2()	false
 #endif
