@@ -2266,9 +2266,10 @@
 };
 
 /*
- * Sleep test build: let the interconnect providers reach sync_state and drop
- * the firmware's boot-time votes. They otherwise wait forever for QCE, which
- * has no driver here (CRYPTO_DEV_QCE is not built).
+ * QCE has no driver in this kernel (CRYPTO_DEV_QCE is not built). With the
+ * node enabled, the interconnect providers never reach sync_state and keep
+ * the firmware's boot-time bandwidth votes, which prevents DDR low-power
+ * mode in suspend.
  */
 &crypto {
 	status = "disabled";
